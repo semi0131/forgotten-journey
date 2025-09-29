@@ -1,65 +1,82 @@
-﻿using UnityEngine;
+﻿using UnityEditor.Build.Content;
+using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
     [Header("이동 설정")]
-    // 캐릭터의 이동 속도를 설정합니다. (Inspector에서 조절 가능)
     [SerializeField] private float moveSpeed = 5f;
 
-    // ⭐ 필수: Rigidbody2D 컴포넌트 참조
+    // ⭐ 1. SPUM_Prefabs 스크립트 참조 변수 추가
+    private SPUM_Prefabs spumPrefabs;
+
+    // 필수: Rigidbody2D 컴포넌트 참조
     private Rigidbody2D rb;
 
-    // 이동 벡터를 저장할 변수
     private Vector2 movement;
-
-    // ⭐ 추가: 캐릭터의 원래 Y축 스케일 값을 저장할 변수 (원래 X, Y 스케일 모두 저장)
     private float originalScaleValue;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        // ⭐ 2. SPUM_Prefabs 컴포넌트를 가져와 할당
+        spumPrefabs = GetComponent<SPUM_Prefabs>();
 
         if (rb == null)
         {
             Debug.LogError("PlayerMovement 스크립트에는 Rigidbody2D 컴포넌트가 필요합니다!");
         }
+        // ⭐ 3. SPUM_Prefabs 참조 실패 시 에러 메시지 출력
+        if (spumPrefabs == null)
+        {
+            Debug.LogError("PlayerMovement 스크립트에는 SPUM_Prefabs 컴포넌트가 필요합니다! 같은 오브젝트에 붙어있는지 확인하세요.");
+        }
 
-        // ⭐ Awake에서 현재 설정된 X, Y 스케일 값(10)을 저장합니다.
-        // X, Y 스케일이 동일하다는 전제 하에 Y 값을 사용합니다.
+        // 스케일 값 초기화 (이전 로직 유지)
         originalScaleValue = transform.localScale.y;
     }
 
-    // Update는 입력 감지에 사용됩니다. (프레임 단위)
     void Update()
     {
-        // 1. A, D 키 입력 감지
         float horizontalInput = Input.GetAxisRaw("Horizontal");
 
         movement.x = horizontalInput;
         movement.y = 0f;
 
-        // ⭐ 2. 캐릭터 방향 뒤집기 (논리 반전 적용)
-
-        // 오른쪽으로 이동 중이면 (D키, horizontalInput > 0)
-        if (horizontalInput > 0)
+        // ===============================================
+        // 🌟 방향 전환 로직 추가 🌟
+        // ===============================================
+        if (horizontalInput > 0) // 오른쪽 이동 (원래 스케일)
         {
-            // ⭐ 논리 반전: 오른쪽으로 이동 시 X축을 음수(-10)로 설정하여 왼쪽을 바라보도록 합니다.
-            transform.localScale = new Vector3(-originalScaleValue, originalScaleValue, 1f);
+            transform.localScale = new Vector3(originalScaleValue, transform.localScale.y, transform.localScale.z);
         }
-        // 왼쪽으로 이동 중이면 (A키, horizontalInput < 0)
-        else if (horizontalInput < 0)
+        else if (horizontalInput < 0) // 왼쪽 이동 (X 스케일 반전)
         {
-            // ⭐ 논리 반전: 왼쪽으로 이동 시 X축을 양수(10)로 설정하여 오른쪽을 바라보도록 합니다.
-            transform.localScale = new Vector3(originalScaleValue, originalScaleValue, 1f);
+            transform.localScale = new Vector3(-originalScaleValue, transform.localScale.y, transform.localScale.z);
+        }
+        // ===============================================
+
+        // ⭐ 4. 애니메이션 상태 변경 로직 추가
+        if (spumPrefabs != null)
+        {
+            if (horizontalInput != 0) // 움직임이 있을 때
+            {
+                // MOVE 애니메이션 재생 (인덱스 0 사용)
+                spumPrefabs.PlayAnimation(PlayerState.MOVE, 0);
+            }
+            else // 멈춰있을 때
+            {
+                // IDLE 애니메이션 재생 (인덱스 0 사용)
+                spumPrefabs.PlayAnimation(PlayerState.IDLE, 0);
+            }
         }
     }
 
-    // FixedUpdate는 물리 계산에 사용됩니다. (고정된 시간 간격)
     void FixedUpdate()
     {
-        // 3. Rigidbody를 이용한 이동 처리
+        // Rigidbody 이동 처리
         if (rb != null)
         {
+            // 이미 velocity를 사용하고 있으므로 이대로 유지합니다.
             rb.linearVelocity = new Vector2(movement.x * moveSpeed, rb.linearVelocity.y);
         }
     }
