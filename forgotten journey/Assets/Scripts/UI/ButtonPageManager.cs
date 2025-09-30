@@ -54,7 +54,6 @@ public class ButtonPageManager : MonoBehaviour
     public void UseMagicSkill()
     {
         // Debug.Log를 통해 버튼이 눌렸고, 페이지 전환은 일어나지 않았음을 확인합니다.
-        Debug.Log("마법 페이지에서 Button(1)이 눌렸습니다. (스킬 사용 기능 작동)");
         // TODO: 나중에 여기에 실제 마법 사용 로직을 추가합니다.
     }
 
@@ -91,8 +90,6 @@ public class ButtonPageManager : MonoBehaviour
 
             // [2] Button(1)에 '스킬 사용' 기능을 연결합니다. (페이지 전환 방지)
             magicButton.onClick.AddListener(UseMagicSkill);
-
-            Debug.Log("페이지 전환: 마법 스킬 페이지. Button(1) 기능이 '스킬 사용'으로 변경됨.");
         }
         else
         {
@@ -101,8 +98,6 @@ public class ButtonPageManager : MonoBehaviour
 
             // [2] Button(1)에 '마법 페이지로 가기' 기능을 다시 연결합니다.
             magicButton.onClick.AddListener(GoToMagicPage);
-
-            Debug.Log("페이지 전환: 기본 전투 페이지. Button(1) 기능이 '마법 페이지로 가기'로 변경됨.");
         }
     }
 
