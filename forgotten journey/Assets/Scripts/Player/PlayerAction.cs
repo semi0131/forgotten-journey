@@ -1,6 +1,7 @@
+ï»¿using System.Collections;
 using UnityEditor.Build.Content;
 using UnityEngine;
-using System.Collections;
+using static TurnManager;
 
 public class PlayerAction : MonoBehaviour
 {
@@ -8,11 +9,11 @@ public class PlayerAction : MonoBehaviour
     GameObject scanObject;
 
     [SerializeField] private SPUM_Prefabs spumPrefabs;
-    [SerializeField] private TurnManager turnManager; // ÅÏ °ü¸® ½ºÅ©¸³Æ® (¼±ÅÃ »çÇ×)
+    [SerializeField] private TurnManager turnManager; // í„´ ê´€ë¦¬ ìŠ¤í¬ë¦½íŠ¸ (ì„ íƒ ì‚¬í•­)
 
     void Start()
     {
-        // ¸¸¾à Inspector¿¡¼­ ¿¬°áÇÏÁö ¾Ê¾Ò´Ù¸é, ¿©±â¼­ Ã£¾Æ¼­ ¿¬°áÇÕ´Ï´Ù.
+        // ë§Œì•½ Inspectorì—ì„œ ì—°ê²°í•˜ì§€ ì•Šì•˜ë‹¤ë©´, ì—¬ê¸°ì„œ ì°¾ì•„ì„œ ì—°ê²°í•©ë‹ˆë‹¤.
         if (spumPrefabs == null)
         {
             spumPrefabs = GetComponent<SPUM_Prefabs>();
@@ -24,32 +25,41 @@ public class PlayerAction : MonoBehaviour
     }
 
     /// <summary>
-    /// °ø°İ ¹öÆ°ÀÇ OnClick ÀÌº¥Æ®¿¡ ¿¬°áµÉ ÇÔ¼ö. 
-    /// ¾Ö´Ï¸ŞÀÌ¼ÇÀ» ½ÇÇàÇÏ°í ÅÏ ¸Å´ÏÀú¿¡°Ô Çàµ¿ ¿Ï·á¸¦ ¾Ë¸³´Ï´Ù.
+    /// ê³µê²© ë²„íŠ¼ì˜ OnClick ì´ë²¤íŠ¸ì— ì—°ê²°ë  í•¨ìˆ˜. 
+    /// ì• ë‹ˆë©”ì´ì…˜ì„ ì‹¤í–‰í•˜ê³  í„´ ë§¤ë‹ˆì €ì—ê²Œ í–‰ë™ ì™„ë£Œë¥¼ ì•Œë¦½ë‹ˆë‹¤.
     /// </summary>
     public void ExecuteAttackAction()
     {
         if (turnManager == null || spumPrefabs == null) return;
 
-        // 1. [ÇÙ½É] ÅÏ ¸Å´ÏÀú¿¡°Ô 'Çàµ¿ ½ÃÀÛ'¸¸ ¾Ë¸³´Ï´Ù. (ÅÏ Á¾·á ÄÚ·çÆ¾ÀÌ ½ÃÀÛµÇÁö ¾ÊÀ½)
-        // ÀÌ ÇÔ¼ö°¡ state = BattleState.Action À¸·Î º¯°æÇÕ´Ï´Ù.
+        // =========================================================
+        // â­ [í•µì‹¬] í„´ ìƒíƒœ ì²´í¬: í”Œë ˆì´ì–´ í„´ì´ ì•„ë‹ ë•ŒëŠ” ì¦‰ì‹œ í•¨ìˆ˜ë¥¼ ì¢…ë£Œí•©ë‹ˆë‹¤.
+        // =========================================================
+        if (turnManager.state != BattleState.PlayerTurn)
+        {
+            Debug.Log("í”Œë ˆì´ì–´ í„´ì´ ì•„ë‹™ë‹ˆë‹¤. ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ ë° í–‰ë™ì„ ì·¨ì†Œí•©ë‹ˆë‹¤.");
+            return; // í„´ì´ ì•„ë‹ˆë¯€ë¡œ ì—¬ê¸°ì„œ ë°”ë¡œ ì¢…ë£Œ!
+        }
+
+        // í„´ì´ ë§ëŠ” ê²½ìš°ì—ë§Œ ì•„ë˜ ë¡œì§ì´ ì‹¤í–‰ë©ë‹ˆë‹¤.
+
+        // 1. [í•µì‹¬] í„´ ë§¤ë‹ˆì €ì—ê²Œ 'í–‰ë™ ì‹œì‘'ì„ ì•Œë¦¬ê³ , í„´ ìƒíƒœë¥¼ Actionìœ¼ë¡œ ë³€ê²½í•©ë‹ˆë‹¤.
         turnManager.StartPlayerAction("ATTACK");
 
-        // 2. °ø°İ ¾Ö´Ï¸ŞÀÌ¼Ç Àç»ı
+        // 2. ê³µê²© ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ (ì´ì œ í„´ ì²´í¬ë¥¼ í†µê³¼í•œ í›„ ì‹¤í–‰ë¨)
         spumPrefabs.PlayAnimation(PlayerState.ATTACK, 0);
 
-        // 3. ¾Ö´Ï¸ŞÀÌ¼Ç Àç»ıÀÌ ³¡³¯ ¶§±îÁö ±â´Ù¸³´Ï´Ù.
-        // SPUM_PrefabsÀÇ ¾Ö´Ï¸ŞÀÌ¼Ç ±æÀÌ¸¦ ¾Ë¾Æ³»°Å³ª, ÀÌº¥Æ® ÇÔ¼ö¸¦ ÅëÇØ Ã³¸®ÇØ¾ß ÇÕ´Ï´Ù.
-        float animationDuration = 1.0f; // ¾Ö´Ï¸ŞÀÌ¼Ç ±æÀÌ¿¡ ¸Â°Ô ¼³Á¤ÇÏ¼¼¿ä!
+        // 3. ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒì´ ëë‚  ë•Œê¹Œì§€ ê¸°ë‹¤ë¦° í›„ í„´ì„ ë„˜ê¹ë‹ˆë‹¤.
+        float animationDuration = 1.0f; // ì• ë‹ˆë©”ì´ì…˜ ê¸¸ì´ì— ë§ê²Œ ì„¤ì •
         StartCoroutine(WaitForActionEnd(animationDuration));
     }
 
     IEnumerator WaitForActionEnd(float duration)
     {
-        // ¾Ö´Ï¸ŞÀÌ¼Ç Àç»ı ½Ã°£¸¸Å­ ±â´Ù¸³´Ï´Ù.
+        // ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ ì‹œê°„ë§Œí¼ ê¸°ë‹¤ë¦½ë‹ˆë‹¤.
         yield return new WaitForSeconds(duration);
 
-        // 4. ¾Ö´Ï¸ŞÀÌ¼ÇÀÌ ³¡³µÀ¸´Ï ÅÏ ¸Å´ÏÀú¿¡°Ô ¾Ë¸®°í ÅÏÀ» Á¾·áÇÕ´Ï´Ù.
+        // 4. ì• ë‹ˆë©”ì´ì…˜ì´ ëë‚¬ìœ¼ë‹ˆ í„´ ë§¤ë‹ˆì €ì—ê²Œ ì•Œë¦¬ê³  í„´ì„ ì¢…ë£Œí•©ë‹ˆë‹¤.
         if (turnManager != null)
         {
             turnManager.FinishPlayerAction();
