@@ -41,7 +41,7 @@ public class SPUM_Prefabs : MonoBehaviour
         // PlayerMovement 스크립트가 호출되기 전에 딕셔너리와 컨트롤러를 초기화합니다.
         OverrideControllerInit();
         // 필요하다면 PopulateAnimationLists()도 여기서 호출하여 애니메이션 클립을 로드합니다.
-        // PopulateAnimationLists(); 
+        PopulateAnimationLists(); 
     }
 
     public void OverrideControllerInit()
