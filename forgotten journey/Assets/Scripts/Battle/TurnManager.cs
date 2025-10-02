@@ -1,158 +1,123 @@
+ï»¿using System.Collections;
 using UnityEngine;
-using System.Collections; // CoroutineÀ» »ç¿ëÇÏ±â À§ÇØ ÇÊ¿äÇÕ´Ï´Ù.
+using UnityEngine.SceneManagement;
+
+// â— BattleStateëŠ” í´ë˜ìŠ¤ ë°–ì— ì •ì˜í•˜ê±°ë‚˜, í´ë˜ìŠ¤ ë§¨ ìœ„ë¡œ ì˜®ê²¨ì•¼ í•©ë‹ˆë‹¤.
+public enum BattleState
+{
+    Start,
+    PlayerTurn,
+    EnemyTurn,
+    Action,
+    Won,
+    Lost
+}
 
 public class TurnManager : MonoBehaviour
 {
-    public BattleState state; // ÇöÀç ÀüÅõ »óÅÂ
+    public BattleState state;
 
-    // ÀüÅõ¿¡ Âü¿©ÇÏ´Â ÇÃ·¹ÀÌ¾î ¹× Àû À¯´Ö ½ºÅ©¸³Æ® (³ªÁß¿¡ ¿¬°á)
-    // [SerializeField] private Unit playerUnit; 
-    // [SerializeField] private Unit enemyUnit;
+    [SerializeField] private ButtonPageManager buttonPageManager;
+
 
     void Start()
     {
-        // ÀüÅõ ½ÃÀÛ
+        if (buttonPageManager == null)
+        {
+            buttonPageManager = FindFirstObjectByType<ButtonPageManager>();
+        }
+
         state = BattleState.Start;
         StartCoroutine(SetupBattle());
     }
 
-    /// <summary>
-    /// ÀüÅõ¸¦ ÃÊ±âÈ­ÇÏ°í Ã¹ ÅÏÀ» ½ÃÀÛÇÕ´Ï´Ù.
-    /// </summary>
+    // ----------------------------------------------------
+    //  ì „íˆ¬ íë¦„ ê´€ë¦¬ (ì½”ë£¨í‹´)
+    // ----------------------------------------------------
+
     IEnumerator SetupBattle()
     {
-        // 1. UI ¼³Á¤ (¿¹: ÀüÅõ ½ÃÀÛ ¸Ş½ÃÁö Ãâ·Â)
-        // battleMessageText.text = "ÀüÅõ ½ÃÀÛ!";
-        Debug.Log("ÀüÅõ¸¦ ½ÃÀÛÇÕ´Ï´Ù.");
+        Debug.Log("ì „íˆ¬ë¥¼ ì‹œì‘í•©ë‹ˆë‹¤.");
+        yield return new WaitForSeconds(1f);
 
-        // 2. Ä³¸¯ÅÍ Á¤º¸ ·Îµù ¹× ÁØºñ (HP, ½ºÅÈ µî)
-        yield return new WaitForSeconds(1f); // 1ÃÊ ´ë±â
-
-        // 3. Ã¹ ÅÏ °áÁ¤ (ÇÃ·¹ÀÌ¾î°¡ ¼±°øÇÑ´Ù°í °¡Á¤)
         state = BattleState.PlayerTurn;
         PlayerTurn();
     }
 
-    /// <summary>
-    /// ÇÃ·¹ÀÌ¾îÀÇ ÅÏÀÌ ½ÃÀÛµÉ ¶§ È£ÃâµË´Ï´Ù.
-    /// </summary>
+    // í„´ ì‹œì‘ ì•Œë¦¼
     void PlayerTurn()
     {
-        // UI¸¦ È°¼ºÈ­ÇÏ¿© ÇÃ·¹ÀÌ¾î¿¡°Ô Çàµ¿ ¼±ÅÃ ±âÈ¸¸¦ Á¦°øÇÕ´Ï´Ù.
-        // UIManager.Instance.ShowActionPanel(); 
-        Debug.Log("ÇÃ·¹ÀÌ¾î ÅÏ: Çàµ¿À» ¼±ÅÃÇÏ¼¼¿ä.");
-
-        // ÀÌ »óÅÂ¿¡¼­ ÇÃ·¹ÀÌ¾îÀÇ ¹öÆ° ÀÔ·Â(°ø°İ, ¸¶¹ı µî)À» ±â´Ù¸³´Ï´Ù.
+        Debug.Log("í”Œë ˆì´ì–´ í„´: í–‰ë™ì„ ì„ íƒí•˜ì„¸ìš”.");
     }
 
-    /// <summary>
-    /// ÇÃ·¹ÀÌ¾îÀÇ Çàµ¿(¿¹: °ø°İ ¹öÆ° Å¬¸¯)ÀÌ µé¾î¿ÔÀ» ¶§ ¿ÜºÎ¿¡¼­ È£ÃâµË´Ï´Ù.
-    /// </summary>
-    public void OnPlayerActionSelected()
+    // í„´ ì¢…ë£Œ ì²˜ë¦¬ (ì  í„´ìœ¼ë¡œ ì „í™˜)
+    IEnumerator PlayerActionFinishCoroutine() // PlayerActionCoroutine ì´ë¦„ ë³€ê²½
     {
-        if (state != BattleState.PlayerTurn)
-            return;
+        Debug.Log("í„´ë§¤ë‹ˆì €: í”Œë ˆì´ì–´ í–‰ë™ ì²˜ë¦¬ ì¤‘... (í„´ ì¢…ë£Œ ëŒ€ê¸°)");
 
-        state = BattleState.Action; // »óÅÂ¸¦ Çàµ¿ ½ÇÇàÀ¸·Î º¯°æ
-        StartCoroutine(PlayerActionCoroutine());
-    }
+        // ì—¬ê¸°ì— ë°ë¯¸ì§€ ê³„ì‚°, íš¨ê³¼ ì ìš© ë“±ì˜ ë¡œì§ì´ ë“¤ì–´ê°‘ë‹ˆë‹¤.
+        yield return null; // í•œ í”„ë ˆì„ ëŒ€ê¸°
 
-    /// <summary>
-    /// ÇÃ·¹ÀÌ¾îÀÇ Çàµ¿À» ½ÇÇàÇÏ´Â ÄÚ·çÆ¾ÀÔ´Ï´Ù.
-    /// </summary>
-    IEnumerator PlayerActionCoroutine()
-    {
-        // 1. ÇÃ·¹ÀÌ¾îÀÇ Çàµ¿(¾Ö´Ï¸ŞÀÌ¼Ç, µ¥¹ÌÁö °è»ê) ½ÇÇà
-        // (¿¹: playerUnit.Attack(enemyUnit);)
-        Debug.Log("ÇÃ·¹ÀÌ¾î°¡ Çàµ¿À» ½ÇÇàÇÕ´Ï´Ù.");
-
-        yield return new WaitForSeconds(2f); // Çàµ¿ ¾Ö´Ï¸ŞÀÌ¼Ç ½Ã°£ ´ë±â
-
-        // 2. ÀûÀÇ »ıÁ¸ È®ÀÎ
-        // if (enemyUnit.isDead)
-        // {
-        //     state = BattleState.Won;
-        //     EndBattle();
-        //     yield break;
-        // }
-
-        // 3. ´ÙÀ½ ÅÏÀ¸·Î ÀüÈ¯
+        // í„´ ìƒíƒœ ë³€ê²½ ë° ë‹¤ìŒ í„´ ì‹œì‘
         state = BattleState.EnemyTurn;
+        Debug.Log("ìƒíƒœ: EnemyTurn. ì  í„´ ì‹œì‘.");
         StartCoroutine(EnemyTurnCoroutine());
     }
 
-    /// <summary>
-    /// ÀûÀÇ ÅÏÀ» Ã³¸®ÇÏ´Â ÄÚ·çÆ¾ÀÔ´Ï´Ù.
-    /// </summary>
     IEnumerator EnemyTurnCoroutine()
     {
-        Debug.Log("ÀûÀÇ ÅÏÀÌ ½ÃÀÛµË´Ï´Ù.");
+        Debug.Log("í„´ë§¤ë‹ˆì €: ì ì˜ í„´ì´ ì‹œì‘ë©ë‹ˆë‹¤.");
+        yield return new WaitForSeconds(1.5f); // ì  í–‰ë™ ëŒ€ê¸° ì‹œê°„
 
-        // 1. Àá½Ã ´ë±â (»ı°¢ÇÏ´Â ½Ã°£)
-        yield return new WaitForSeconds(1f);
-
-        // 2. ÀûÀÇ Çàµ¿(AI) °áÁ¤ ¹× ½ÇÇà
-        // (¿¹: enemyUnit.DecideAndAct(playerUnit);)
-        Debug.Log("ÀûÀÌ Çàµ¿À» ½ÇÇàÇÕ´Ï´Ù.");
-
-        yield return new WaitForSeconds(2f); // Àû Çàµ¿ ½Ã°£ ´ë±â
-
-        // 3. ÇÃ·¹ÀÌ¾îÀÇ »ıÁ¸ È®ÀÎ
-        // if (playerUnit.isDead)
-        // {
-        //     state = BattleState.Lost;
-        //     EndBattle();
-        //     yield break;
-        // }
-
-        // 4. ´ÙÀ½ ÅÏ(ÇÃ·¹ÀÌ¾î ÅÏ)À¸·Î ÀüÈ¯
+        // í„´ ìƒíƒœ ë³€ê²½ ë° í”Œë ˆì´ì–´ í„´ìœ¼ë¡œ ë³µê·€
         state = BattleState.PlayerTurn;
+
+        if (buttonPageManager != null)
+        {
+            buttonPageManager.ResetToBattlePage();
+        }
+        Debug.Log("ìƒíƒœ: PlayerTurn. í”Œë ˆì´ì–´ í„´ ì¬ì‹œì‘.");
         PlayerTurn();
     }
 
-    /// <summary>
-    /// ÀüÅõ Á¾·á¸¦ Ã³¸®ÇÕ´Ï´Ù.
-    /// </summary>
-    void EndBattle()
-    {
-        if (state == BattleState.Won)
-        {
-            Debug.Log("ÀüÅõ¿¡¼­ ½Â¸®Çß½À´Ï´Ù!");
-        }
-        else if (state == BattleState.Lost)
-        {
-            Debug.Log("ÀüÅõ¿¡¼­ ÆĞ¹èÇß½À´Ï´Ù.");
-        }
-    }
+    // ... (EndBattle í•¨ìˆ˜ëŠ” ìœ ì§€)
 
+    // ----------------------------------------------------
+    //  PlayerAction ìŠ¤í¬ë¦½íŠ¸ ì—°ë™ í•¨ìˆ˜
+    // ----------------------------------------------------
+
+    /// <summary>
+    /// PlayerActionì´ ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ ì „ì— í˜¸ì¶œí•©ë‹ˆë‹¤.
+    /// </summary>
     public void StartPlayerAction(string actionType)
     {
         if (state != BattleState.PlayerTurn)
         {
-            Debug.Log("Áö±İÀº ÇÃ·¹ÀÌ¾î ÅÏÀÌ ¾Æ´Õ´Ï´Ù. Çàµ¿ Ãë¼Ò.");
+            Debug.Log("ì§€ê¸ˆì€ í”Œë ˆì´ì–´ í„´ì´ ì•„ë‹™ë‹ˆë‹¤. í–‰ë™ ì·¨ì†Œ.");
             return;
         }
 
-        // ÅÏÀ» Action »óÅÂ·Î º¯°æÇÏ¿© ´Ù¸¥ ÀÔ·ÂÀ» ¸·½À´Ï´Ù.
         state = BattleState.Action;
-        Debug.Log($"ÅÏ ¼Òºñ Çàµ¿: {actionType} ½ÃÀÛ. »óÅÂ: Action");
-
-        // **[ÇÙ½É]** ÄÚ·çÆ¾Àº ¾ÆÁ÷ ½ÃÀÛÇÏÁö ¾Ê½À´Ï´Ù. PlayerActionÀÌ ¾Ö´Ï¸ŞÀÌ¼ÇÀ» Àç»ıÇÑ ÈÄ È£ÃâÇÒ °Ì´Ï´Ù.
+        Debug.Log($"í„´ ì†Œë¹„ í–‰ë™: {actionType} ì‹œì‘. ìƒíƒœ: Action");
     }
 
+    /// <summary>
+    /// PlayerActionì´ ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ í›„ ì§€ì—° ì‹œê°„(Coroutine)ì´ ëë‚¬ì„ ë•Œ í˜¸ì¶œí•©ë‹ˆë‹¤.
+    /// </summary>
     public void FinishPlayerAction()
     {
-        // ¾Ö´Ï¸ŞÀÌ¼ÇÀÌ ³¡³µÀ¸´Ï ÀÌÁ¦ ´ÙÀ½ ÅÏÀ¸·Î ³Ñ¾î°¥ ¼ö ÀÖ½À´Ï´Ù.
-        StartCoroutine(PlayerActionCoroutine());
+        // PlayerActionFinishCoroutineì„ í˜¸ì¶œí•˜ì—¬ ì  í„´ìœ¼ë¡œ ë„˜ì–´ê°‘ë‹ˆë‹¤.
+        StartCoroutine(PlayerActionFinishCoroutine());
     }
 
-    public enum BattleState
+    /// <summary>
+    /// ë„ë§ê°€ê¸° ë²„íŠ¼ì— ì—°ê²°ë  í•¨ìˆ˜. Forest_1 ì”¬ìœ¼ë¡œ ì „í™˜í•©ë‹ˆë‹¤.
+    /// </summary>
+    public void RunFromBattle()
     {
-        Start,          // ÀüÅõ ½ÃÀÛ (ÃÊ±âÈ­ ´Ü°è)
-        PlayerTurn,     // ÇÃ·¹ÀÌ¾î°¡ Çàµ¿À» ¼±ÅÃÇÒ Â÷·Ê
-        EnemyTurn,      // ÀûÀÌ Çàµ¿À» ÇÏ´Â Â÷·Ê
-        Action,         // ÇÃ·¹ÀÌ¾î³ª ÀûÀÇ Çàµ¿ÀÌ ½ÇÁ¦·Î ½ÇÇàµÇ´Â Áß
-        Won,            // ÀüÅõ ½Â¸®
-        Lost            // ÀüÅõ ÆĞ¹è
+        Debug.Log("ì „íˆ¬ì—ì„œ ë„ë§ê°‘ë‹ˆë‹¤! Forest_1 ì”¬ìœ¼ë¡œ ì´ë™.");
+
+        // **[í•µì‹¬]** ì”¬ì„ ë¡œë“œí•©ë‹ˆë‹¤. (ì´ë¦„ì„ ì •í™•íˆ í™•ì¸í•˜ì„¸ìš”)
+        SceneManager.LoadScene("Forest_1");
     }
 }

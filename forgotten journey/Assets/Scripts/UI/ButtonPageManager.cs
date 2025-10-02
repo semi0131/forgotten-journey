@@ -1,29 +1,33 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System; // Enum.GetValues 사용을 위해 추가될 수 있음
 
 public class ButtonPageManager : MonoBehaviour
 {
     // ----------------------------------------------------------------------------------
-    // UI 및 컴포넌트 연결
+    // UI 및 외부 스크립트 연결
     // ----------------------------------------------------------------------------------
 
-    [Header("UI 연결")]
+    [Header("UI 컴포넌트 연결")]
     [SerializeField] private Button[] battleButtons = new Button[3];
     [SerializeField] private TextMeshProUGUI[] buttonTextComponents = new TextMeshProUGUI[3];
     [SerializeField] private AbilityButton[] abilityButtonScripts = new AbilityButton[3];
 
     [Header("페이지 전환 버튼")]
-    // Button(1) 컴포넌트를 연결합니다. (OnClick 리스너를 코드로 관리하기 위함)
-    [SerializeField] private Button magicButton;
+    [SerializeField] private Button magicButton; // Button(1)을 여기에 연결합니다. 
+
+    [Header("외부 스크립트 연결")]
+    [SerializeField] private PlayerAction playerAction; // 턴 소비 행동 실행을 위해 필요
+    [SerializeField] private TurnManager turnManager;   // 도망가기 기능 실행을 위해 필요
 
     // ----------------------------------------------------------------------------------
     // 데이터 설정
     // ----------------------------------------------------------------------------------
 
     [Header("페이지 데이터")]
-    public AbilityData[] battlePageData = new AbilityData[3];
-    public AbilityData[] magicPageData = new AbilityData[3];
+    public AbilityData[] battlePageData = new AbilityData[3]; // 공격, 마법, 도망가기
+    public AbilityData[] magicPageData = new AbilityData[3];  // 마법 스킬 1, 2, 3 (혹은 돌아가기)
 
     // ----------------------------------------------------------------------------------
     // 내부 로직
@@ -33,7 +37,11 @@ public class ButtonPageManager : MonoBehaviour
 
     void Start()
     {
-        SwitchPage(false); // 시작 시 전투 페이지로 설정
+        if (playerAction == null) playerAction = FindFirstObjectByType<PlayerAction>();
+        if (turnManager == null) turnManager = FindFirstObjectByType<TurnManager>();
+
+        // 게임 시작 시 전투 페이지로 초기화합니다.
+        SwitchPage(false);
     }
 
     /// <summary>
@@ -47,17 +55,7 @@ public class ButtonPageManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 마법 페이지에서 Button(1)이 눌렸을 때 실행될 함수입니다. (페이지 전환 없음)
-    /// 나중에 실제 스킬 사용 로직을 여기에 추가하세요.
-    /// </summary>
-    public void UseMagicSkill()
-    {
-        // Debug.Log를 통해 버튼이 눌렸고, 페이지 전환은 일어나지 않았음을 확인합니다.
-        // TODO: 나중에 여기에 실제 마법 사용 로직을 추가합니다.
-    }
-
-    // (선택 사항: 다른 버튼을 눌러 전투 페이지로 돌아가야 한다면 이 함수를 사용)
+    // (선택 사항: 마법 페이지에서 전투 페이지로 돌아가는 버튼이 있다면 연결)
     public void GoToBattlePage()
     {
         if (isMagicPage)
@@ -66,7 +64,6 @@ public class ButtonPageManager : MonoBehaviour
         }
     }
 
-
     /// <summary>
     /// 실제 페이지 전환 및 Button(1)의 기능을 업데이트합니다.
     /// </summary>
@@ -74,45 +71,96 @@ public class ButtonPageManager : MonoBehaviour
     {
         isMagicPage = toMagic; // 상태 업데이트
 
-        if (magicButton == null)
-        {
-            Debug.LogError("Magic Button (Button(1))이 Inspector에 연결되지 않았습니다.");
-            return;
-        }
+        if (magicButton == null) return;
 
-        // 기존 Button(1)에 연결된 모든 기능을 제거합니다. (필수)
+        // 1. 기존 Button(1)의 리스너를 모두 제거합니다.
         magicButton.onClick.RemoveAllListeners();
 
+        // 2. 툴팁 텍스트 및 버튼 이름 업데이트
+        ApplyPage(toMagic ? magicPageData : battlePageData);
+
+        // 3. 페이지에 따라 Button(1)의 기능 설정 (스킬 사용 vs 페이지 전환)
         if (toMagic)
         {
-            // [1] 마법 페이지로 전환
-            ApplyPage(magicPageData);
-
-            // [2] Button(1)에 '스킬 사용' 기능을 연결합니다. (페이지 전환 방지)
-            magicButton.onClick.AddListener(UseMagicSkill);
+            // 마법 페이지: Button(1)을 '턴 소비 스킬'로 연결합니다.
+            magicButton.onClick.AddListener(() => playerAction.ExecutePlayerAction("MAGIC_M")); // MAGIC_M은 Button(1) 스킬을 의미
+            Debug.Log("페이지 전환: 마법 스킬 페이지. Button(1) 기능이 스킬 사용으로 변경됨.");
         }
         else
         {
-            // [1] 전투 페이지로 전환
-            ApplyPage(battlePageData);
-
-            // [2] Button(1)에 '마법 페이지로 가기' 기능을 다시 연결합니다.
+            // 전투 페이지: Button(1)을 '페이지 전환' 기능으로 연결합니다.
             magicButton.onClick.AddListener(GoToMagicPage);
+            Debug.Log("페이지 전환: 기본 전투 페이지. Button(1) 기능이 마법 페이지로 가기로 변경됨.");
+        }
+
+        // 4. 나머지 버튼들 (Button(0), Button(2))의 리스너를 페이지에 맞게 설정합니다.
+        SetOtherButtonListeners(toMagic);
+    }
+
+    /// <summary>
+    /// Button(0)과 Button(2)의 OnClick 리스너를 페이지에 맞게 동적으로 설정합니다.
+    /// </summary>
+    private void SetOtherButtonListeners(bool isMagicPage)
+    {
+        for (int i = 0; i < battleButtons.Length; i++)
+        {
+            Button button = battleButtons[i];
+
+            // Button(1)은 SwitchPage에서 처리했으므로 건너뜁니다.
+            if (i == 1) continue;
+
+            button.onClick.RemoveAllListeners(); // 기존 리스너 모두 제거!
+
+            if (!isMagicPage) // 전투 페이지 (Button(0): 공격, Button(2): 도망가기)
+            {
+                if (i == 0 && playerAction != null) // Button(0) - 공격
+                {
+                    // 람다 표현식으로 "ATTACK" 문자열 인자를 전달합니다.
+                    button.onClick.AddListener(() => playerAction.ExecutePlayerAction("ATTACK"));
+                }
+                else if (i == 2 && turnManager != null) // Button(2) - 도망가기
+                {
+                    button.onClick.AddListener(turnManager.RunFromBattle);
+                }
+            }
+            else // 마법 페이지 (Button(0), Button(2) 모두 턴 소비 마법 스킬)
+            {
+                if (playerAction != null)
+                {
+                    string actionType = (i == 0) ? "MAGIC_A" : "MAGIC_B"; // Button(0), Button(2)를 구분합니다.
+                    button.onClick.AddListener(() => playerAction.ExecutePlayerAction(actionType));
+                }
+            }
         }
     }
 
     /// <summary>
-    /// 배열에 설정된 데이터를 UI 컴포넌트에 적용합니다. (이전과 동일)
+    /// 배열에 설정된 데이터를 UI 컴포넌트(이름, 툴팁)에 적용합니다.
     /// </summary>
     private void ApplyPage(AbilityData[] data)
     {
+        if (data.Length < 3) return;
+
         for (int i = 0; i < 3; i++)
         {
             if (buttonTextComponents[i] != null)
+            {
                 buttonTextComponents[i].text = data[i].buttonName;
+            }
 
+            // AbilityButton 스크립트가 있다면 툴팁 데이터 업데이트
             if (abilityButtonScripts[i] != null)
+            {
+                // **주의:** AbilityButton.cs에 SetTooltipDescription 함수가 필요합니다.
                 abilityButtonScripts[i].SetTooltipDescription(data[i].tooltipDescription);
+            }
+        }
+    }
+    public void ResetToBattlePage()
+    {
+        if (isMagicPage)
+        {
+            GoToBattlePage(); // GoToBattlePage()가 SwitchPage(false)를 호출하여 기본 페이지로 전환
         }
     }
 }

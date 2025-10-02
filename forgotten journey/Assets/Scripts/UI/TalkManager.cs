@@ -50,10 +50,10 @@ public class TalkManager : MonoBehaviour
 
         currentTarget = targetObj;
         currentDialogueID = dialogueID;
-        dialogueIndex = 0;
+        dialogueIndex = 0; // 대화 시작 시 인덱스 0으로 초기화
 
         dialoguePanel.SetActive(true);
-        DisplayDialogue();
+        DisplayDialogue(); // 인덱스 0 (첫 번째 문장) 출력
         Debug.Log(targetObj.name + "과의 대화 시작. ID: " + dialogueID);
     }
 
@@ -66,18 +66,20 @@ public class TalkManager : MonoBehaviour
             return;
         }
 
-        dialogueIndex++;
+        dialogueIndex++; // 다음 문장으로 인덱스 증가
 
         if (dialogueData.ContainsKey(currentDialogueID))
         {
             int totalLines = dialogueData[currentDialogueID].Length;
 
+            // ⭐ 강화된 로직: 인덱스가 배열의 길이를 초과하지 않았는지 확인
             if (dialogueIndex < totalLines)
             {
                 DisplayDialogue();
             }
             else
             {
+                // 인덱스가 배열 길이에 도달하거나 초과하면 대화 종료
                 EndDialogue();
             }
         }
@@ -87,6 +89,7 @@ public class TalkManager : MonoBehaviour
     {
         if (dialogueData.ContainsKey(currentDialogueID) && talkText != null)
         {
+            // ⭐ 현재 증가된 인덱스의 문장을 출력
             talkText.text = dialogueData[currentDialogueID][dialogueIndex];
         }
     }
