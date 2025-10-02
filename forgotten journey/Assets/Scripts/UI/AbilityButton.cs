@@ -1,12 +1,15 @@
 using UnityEngine;
-using UnityEngine.EventSystems; // IPointerEnterHandler, IPointerExitHandler 사용을 위해 필요
+using UnityEngine.EventSystems; 
+using UnityEngine.UI;
 
-// 마우스가 들어오고 나가는 이벤트를 처리하기 위한 인터페이스 상속
 public class AbilityButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     // 유니티 인스펙터 창에서 버튼별 설명을 쉽게 입력할 수 있도록 합니다.
     [TextArea(3, 5)]
     [SerializeField] private string tooltipDescription = "여기에 스킬/아이템 설명을 입력하세요.";
+
+    private TurnManager turnManager;
+    private Button buttonComponent;
 
     public void SetTooltipDescription(string newDescription)
     {
