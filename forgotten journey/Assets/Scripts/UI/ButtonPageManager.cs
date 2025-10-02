@@ -1,43 +1,51 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System; // Enum.GetValues ì‚¬ìš©ì„ ìœ„í•´ ì¶”ê°€ë  ìˆ˜ ìˆìŒ
 
 public class ButtonPageManager : MonoBehaviour
 {
     // ----------------------------------------------------------------------------------
-    // UI ¹× ÄÄÆ÷³ÍÆ® ¿¬°á
+    // UI ë° ì™¸ë¶€ ìŠ¤í¬ë¦½íŠ¸ ì—°ê²°
     // ----------------------------------------------------------------------------------
 
-    [Header("UI ¿¬°á")]
+    [Header("UI ì»´í¬ë„ŒíŠ¸ ì—°ê²°")]
     [SerializeField] private Button[] battleButtons = new Button[3];
     [SerializeField] private TextMeshProUGUI[] buttonTextComponents = new TextMeshProUGUI[3];
     [SerializeField] private AbilityButton[] abilityButtonScripts = new AbilityButton[3];
 
-    [Header("ÆäÀÌÁö ÀüÈ¯ ¹öÆ°")]
-    // Button(1) ÄÄÆ÷³ÍÆ®¸¦ ¿¬°áÇÕ´Ï´Ù. (OnClick ¸®½º³Ê¸¦ ÄÚµå·Î °ü¸®ÇÏ±â À§ÇÔ)
-    [SerializeField] private Button magicButton;
+    [Header("í˜ì´ì§€ ì „í™˜ ë²„íŠ¼")]
+    [SerializeField] private Button magicButton; // Button(1)ì„ ì—¬ê¸°ì— ì—°ê²°í•©ë‹ˆë‹¤. 
+
+    [Header("ì™¸ë¶€ ìŠ¤í¬ë¦½íŠ¸ ì—°ê²°")]
+    [SerializeField] private PlayerAction playerAction; // í„´ ì†Œë¹„ í–‰ë™ ì‹¤í–‰ì„ ìœ„í•´ í•„ìš”
+    [SerializeField] private TurnManager turnManager;   // ë„ë§ê°€ê¸° ê¸°ëŠ¥ ì‹¤í–‰ì„ ìœ„í•´ í•„ìš”
 
     // ----------------------------------------------------------------------------------
-    // µ¥ÀÌÅÍ ¼³Á¤
+    // ë°ì´í„° ì„¤ì •
     // ----------------------------------------------------------------------------------
 
-    [Header("ÆäÀÌÁö µ¥ÀÌÅÍ")]
-    public AbilityData[] battlePageData = new AbilityData[3];
-    public AbilityData[] magicPageData = new AbilityData[3];
+    [Header("í˜ì´ì§€ ë°ì´í„°")]
+    public AbilityData[] battlePageData = new AbilityData[3]; // ê³µê²©, ë§ˆë²•, ë„ë§ê°€ê¸°
+    public AbilityData[] magicPageData = new AbilityData[3];  // ë§ˆë²• ìŠ¤í‚¬ 1, 2, 3 (í˜¹ì€ ëŒì•„ê°€ê¸°)
 
     // ----------------------------------------------------------------------------------
-    // ³»ºÎ ·ÎÁ÷
+    // ë‚´ë¶€ ë¡œì§
     // ----------------------------------------------------------------------------------
 
     private bool isMagicPage = false;
 
     void Start()
     {
-        SwitchPage(false); // ½ÃÀÛ ½Ã ÀüÅõ ÆäÀÌÁö·Î ¼³Á¤
+        if (playerAction == null) playerAction = FindFirstObjectByType<PlayerAction>();
+        if (turnManager == null) turnManager = FindFirstObjectByType<TurnManager>();
+
+        // ê²Œì„ ì‹œì‘ ì‹œ ì „íˆ¬ í˜ì´ì§€ë¡œ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+        SwitchPage(false);
     }
 
     /// <summary>
-    /// ¸¶¹ı ÆäÀÌÁö·Î ÀüÈ¯ÇÏ´Â ÇÔ¼öÀÔ´Ï´Ù. (ÀüÅõ ÆäÀÌÁöÀÇ Button(1) Å¬¸¯ ½Ã ¿¬°á)
+    /// ë§ˆë²• í˜ì´ì§€ë¡œ ì „í™˜í•˜ëŠ” í•¨ìˆ˜ì…ë‹ˆë‹¤. (ì „íˆ¬ í˜ì´ì§€ì˜ Button(1) í´ë¦­ ì‹œ ì—°ê²°)
     /// </summary>
     public void GoToMagicPage()
     {
@@ -47,17 +55,7 @@ public class ButtonPageManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// ¸¶¹ı ÆäÀÌÁö¿¡¼­ Button(1)ÀÌ ´­·ÈÀ» ¶§ ½ÇÇàµÉ ÇÔ¼öÀÔ´Ï´Ù. (ÆäÀÌÁö ÀüÈ¯ ¾øÀ½)
-    /// ³ªÁß¿¡ ½ÇÁ¦ ½ºÅ³ »ç¿ë ·ÎÁ÷À» ¿©±â¿¡ Ãß°¡ÇÏ¼¼¿ä.
-    /// </summary>
-    public void UseMagicSkill()
-    {
-        // Debug.Log¸¦ ÅëÇØ ¹öÆ°ÀÌ ´­·È°í, ÆäÀÌÁö ÀüÈ¯Àº ÀÏ¾î³ªÁö ¾Ê¾ÒÀ½À» È®ÀÎÇÕ´Ï´Ù.
-        // TODO: ³ªÁß¿¡ ¿©±â¿¡ ½ÇÁ¦ ¸¶¹ı »ç¿ë ·ÎÁ÷À» Ãß°¡ÇÕ´Ï´Ù.
-    }
-
-    // (¼±ÅÃ »çÇ×: ´Ù¸¥ ¹öÆ°À» ´­·¯ ÀüÅõ ÆäÀÌÁö·Î µ¹¾Æ°¡¾ß ÇÑ´Ù¸é ÀÌ ÇÔ¼ö¸¦ »ç¿ë)
+    // (ì„ íƒ ì‚¬í•­: ë§ˆë²• í˜ì´ì§€ì—ì„œ ì „íˆ¬ í˜ì´ì§€ë¡œ ëŒì•„ê°€ëŠ” ë²„íŠ¼ì´ ìˆë‹¤ë©´ ì—°ê²°)
     public void GoToBattlePage()
     {
         if (isMagicPage)
@@ -66,59 +64,109 @@ public class ButtonPageManager : MonoBehaviour
         }
     }
 
-
     /// <summary>
-    /// ½ÇÁ¦ ÆäÀÌÁö ÀüÈ¯ ¹× Button(1)ÀÇ ±â´ÉÀ» ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+    /// ì‹¤ì œ í˜ì´ì§€ ì „í™˜ ë° Button(1)ì˜ ê¸°ëŠ¥ì„ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
     /// </summary>
     private void SwitchPage(bool toMagic)
     {
-        isMagicPage = toMagic; // »óÅÂ ¾÷µ¥ÀÌÆ®
+        isMagicPage = toMagic; // ìƒíƒœ ì—…ë°ì´íŠ¸
 
-        if (magicButton == null)
-        {
-            Debug.LogError("Magic Button (Button(1))ÀÌ Inspector¿¡ ¿¬°áµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
-            return;
-        }
+        if (magicButton == null) return;
 
-        // ±âÁ¸ Button(1)¿¡ ¿¬°áµÈ ¸ğµç ±â´ÉÀ» Á¦°ÅÇÕ´Ï´Ù. (ÇÊ¼ö)
+        // 1. ê¸°ì¡´ Button(1)ì˜ ë¦¬ìŠ¤ë„ˆë¥¼ ëª¨ë‘ ì œê±°í•©ë‹ˆë‹¤.
         magicButton.onClick.RemoveAllListeners();
 
+        // 2. íˆ´íŒ í…ìŠ¤íŠ¸ ë° ë²„íŠ¼ ì´ë¦„ ì—…ë°ì´íŠ¸
+        ApplyPage(toMagic ? magicPageData : battlePageData);
+
+        // 3. í˜ì´ì§€ì— ë”°ë¼ Button(1)ì˜ ê¸°ëŠ¥ ì„¤ì • (ìŠ¤í‚¬ ì‚¬ìš© vs í˜ì´ì§€ ì „í™˜)
         if (toMagic)
         {
-            // [1] ¸¶¹ı ÆäÀÌÁö·Î ÀüÈ¯
-            ApplyPage(magicPageData);
-
-            // [2] Button(1)¿¡ '½ºÅ³ »ç¿ë' ±â´ÉÀ» ¿¬°áÇÕ´Ï´Ù. (ÆäÀÌÁö ÀüÈ¯ ¹æÁö)
-            magicButton.onClick.AddListener(UseMagicSkill);
+            // ë§ˆë²• í˜ì´ì§€: Button(1)ì„ 'í„´ ì†Œë¹„ ìŠ¤í‚¬'ë¡œ ì—°ê²°í•©ë‹ˆë‹¤.
+            magicButton.onClick.AddListener(() => playerAction.ExecutePlayerAction("MAGIC_M")); // MAGIC_Mì€ Button(1) ìŠ¤í‚¬ì„ ì˜ë¯¸
+            Debug.Log("í˜ì´ì§€ ì „í™˜: ë§ˆë²• ìŠ¤í‚¬ í˜ì´ì§€. Button(1) ê¸°ëŠ¥ì´ ìŠ¤í‚¬ ì‚¬ìš©ìœ¼ë¡œ ë³€ê²½ë¨.");
         }
         else
         {
-            // [1] ÀüÅõ ÆäÀÌÁö·Î ÀüÈ¯
-            ApplyPage(battlePageData);
-
-            // [2] Button(1)¿¡ '¸¶¹ı ÆäÀÌÁö·Î °¡±â' ±â´ÉÀ» ´Ù½Ã ¿¬°áÇÕ´Ï´Ù.
+            // ì „íˆ¬ í˜ì´ì§€: Button(1)ì„ 'í˜ì´ì§€ ì „í™˜' ê¸°ëŠ¥ìœ¼ë¡œ ì—°ê²°í•©ë‹ˆë‹¤.
             magicButton.onClick.AddListener(GoToMagicPage);
+            Debug.Log("í˜ì´ì§€ ì „í™˜: ê¸°ë³¸ ì „íˆ¬ í˜ì´ì§€. Button(1) ê¸°ëŠ¥ì´ ë§ˆë²• í˜ì´ì§€ë¡œ ê°€ê¸°ë¡œ ë³€ê²½ë¨.");
+        }
+
+        // 4. ë‚˜ë¨¸ì§€ ë²„íŠ¼ë“¤ (Button(0), Button(2))ì˜ ë¦¬ìŠ¤ë„ˆë¥¼ í˜ì´ì§€ì— ë§ê²Œ ì„¤ì •í•©ë‹ˆë‹¤.
+        SetOtherButtonListeners(toMagic);
+    }
+
+    /// <summary>
+    /// Button(0)ê³¼ Button(2)ì˜ OnClick ë¦¬ìŠ¤ë„ˆë¥¼ í˜ì´ì§€ì— ë§ê²Œ ë™ì ìœ¼ë¡œ ì„¤ì •í•©ë‹ˆë‹¤.
+    /// </summary>
+    private void SetOtherButtonListeners(bool isMagicPage)
+    {
+        for (int i = 0; i < battleButtons.Length; i++)
+        {
+            Button button = battleButtons[i];
+
+            // Button(1)ì€ SwitchPageì—ì„œ ì²˜ë¦¬í–ˆìœ¼ë¯€ë¡œ ê±´ë„ˆëœë‹ˆë‹¤.
+            if (i == 1) continue;
+
+            button.onClick.RemoveAllListeners(); // ê¸°ì¡´ ë¦¬ìŠ¤ë„ˆ ëª¨ë‘ ì œê±°!
+
+            if (!isMagicPage) // ì „íˆ¬ í˜ì´ì§€ (Button(0): ê³µê²©, Button(2): ë„ë§ê°€ê¸°)
+            {
+                if (i == 0 && playerAction != null) // Button(0) - ê³µê²©
+                {
+                    // ëŒë‹¤ í‘œí˜„ì‹ìœ¼ë¡œ "ATTACK" ë¬¸ìì—´ ì¸ìë¥¼ ì „ë‹¬í•©ë‹ˆë‹¤.
+                    button.onClick.AddListener(() => playerAction.ExecutePlayerAction("ATTACK"));
+                }
+                else if (i == 2 && turnManager != null) // Button(2) - ë„ë§ê°€ê¸°
+                {
+                    button.onClick.AddListener(turnManager.RunFromBattle);
+                }
+            }
+            else // ë§ˆë²• í˜ì´ì§€ (Button(0), Button(2) ëª¨ë‘ í„´ ì†Œë¹„ ë§ˆë²• ìŠ¤í‚¬)
+            {
+                if (playerAction != null)
+                {
+                    string actionType = (i == 0) ? "MAGIC_A" : "MAGIC_B"; // Button(0), Button(2)ë¥¼ êµ¬ë¶„í•©ë‹ˆë‹¤.
+                    button.onClick.AddListener(() => playerAction.ExecutePlayerAction(actionType));
+                }
+            }
         }
     }
 
     /// <summary>
-    /// ¹è¿­¿¡ ¼³Á¤µÈ µ¥ÀÌÅÍ¸¦ UI ÄÄÆ÷³ÍÆ®¿¡ Àû¿ëÇÕ´Ï´Ù. (ÀÌÀü°ú µ¿ÀÏ)
+    /// ë°°ì—´ì— ì„¤ì •ëœ ë°ì´í„°ë¥¼ UI ì»´í¬ë„ŒíŠ¸(ì´ë¦„, íˆ´íŒ)ì— ì ìš©í•©ë‹ˆë‹¤.
     /// </summary>
     private void ApplyPage(AbilityData[] data)
     {
+        if (data.Length < 3) return;
+
         for (int i = 0; i < 3; i++)
         {
             if (buttonTextComponents[i] != null)
+            {
                 buttonTextComponents[i].text = data[i].buttonName;
+            }
 
+            // AbilityButton ìŠ¤í¬ë¦½íŠ¸ê°€ ìˆë‹¤ë©´ íˆ´íŒ ë°ì´í„° ì—…ë°ì´íŠ¸
             if (abilityButtonScripts[i] != null)
+            {
+                // **ì£¼ì˜:** AbilityButton.csì— SetTooltipDescription í•¨ìˆ˜ê°€ í•„ìš”í•©ë‹ˆë‹¤.
                 abilityButtonScripts[i].SetTooltipDescription(data[i].tooltipDescription);
+            }
+        }
+    }
+    public void ResetToBattlePage()
+    {
+        if (isMagicPage)
+        {
+            GoToBattlePage(); // GoToBattlePage()ê°€ SwitchPage(false)ë¥¼ í˜¸ì¶œí•˜ì—¬ ê¸°ë³¸ í˜ì´ì§€ë¡œ ì „í™˜
         }
     }
 }
 
 // ----------------------------------------------------------------------------------
-// µ¥ÀÌÅÍ ±¸Á¶Ã¼ Á¤ÀÇ (°°Àº ÆÄÀÏ¿¡ ³Ö°Å³ª º°µµ ÆÄÀÏ·Î ¸¸µì´Ï´Ù)
+// ë°ì´í„° êµ¬ì¡°ì²´ ì •ì˜ (ê°™ì€ íŒŒì¼ì— ë„£ê±°ë‚˜ ë³„ë„ íŒŒì¼ë¡œ ë§Œë“­ë‹ˆë‹¤)
 // ----------------------------------------------------------------------------------
 
 [System.Serializable]
