@@ -65,10 +65,4 @@ public class PlayerAction : MonoBehaviour
             turnManager.FinishPlayerAction();
         }
     }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space) && scanObject != null)
-            manager.Action(scanObject);
-    }
 }
